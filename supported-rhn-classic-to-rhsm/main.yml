@@ -1,0 +1,24 @@
+---
+# How to migrate a Red Hat Enterprise Linux System from RHN Classic to RHSM
+# https://access.redhat.com/solutions/129723
+#
+# As of RHEL5.8 and RHEL6.2, Red Hat provides a script that will assist in the migration of systems registered to RHN Classic to Certificate-based RHN.
+
+- hosts: rhel
+  remote_user: root
+  vars:
+    rhn_user: "CHANGEME"
+    rhn_pass: "CHANGEME"
+  tasks:
+  - name: yum | install subscription-manager*
+    yum: name={{ item.pkg }} state=latest
+    with_items:
+         - { pkg: 'subscription-manager' }
+         - { pkg: 'subscription-manager-migration' }
+         - { pkg: 'subscription-manager-migration-data' }
+    when: ansible_distribution == "RedHat"
+
+  - name: rhn-migrate-classic-to-rhsm | perform migration script
+    command: rhn-migrate-classic-to-rhsm --legacy-user={{ rhn_user }} --legacy-password={{ rhn_pass }}
+    when: ansible_distribution == "RedHat"
+    ignore_errors: yes

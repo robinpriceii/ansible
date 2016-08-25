@@ -1,0 +1,10 @@
+# This file is for testing purposes
+[rhel]
+192.168.100.6
+192.168.100.5
+
+[rhel6]
+192.168.100.6	ansible_connection=ssh	ansible_user=root
+
+[rhel5]
+192.168.100.5	ansible_connection=ssh	ansible_user=root

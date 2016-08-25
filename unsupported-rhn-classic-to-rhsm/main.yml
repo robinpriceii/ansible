@@ -1,0 +1,40 @@
+---
+# How to migrate a Red Hat Enterprise Linux System from RHN Classic to RHSM
+# https://access.redhat.com/solutions/129723
+# Manual | Unsupported method.
+# For versions of RHEL where the migration script isn't "supported".
+# GOTCHA:  This will run the --auto-attach feature from Subscription Manager.
+#          This may add additional repositories to the machine.
+#          Example:  EUS repos/CloudForms tools repo/RHN tools repo
+#          None of these will compromise the health of the machine.
+
+- hosts: rhel
+  remote_user: root
+  vars:
+    rhn_user: "CHANGEME!"
+    rhn_pass: "CHANGEME!"
+  tasks:
+  - name: yum | install RHSM
+    yum: name={{ item.pkg }} state=latest
+    with_items:
+         - { pkg: 'subscription-manager' }
+         - { pkg: 'libselinux-python' }
+    when: ansible_distribution == "RedHat"
+
+  - name: vim | disable /etc/yum/pluginconf.d/rhnplugin.conf
+    lineinfile: dest=/etc/yum/pluginconf.d/rhnplugin.conf 
+                regexp="^enabled" 
+                line="enabled = 0"
+    when: ansible_distribution == "RedHat"
+
+  - name: yum | clean all
+    command: /usr/bin/yum clean all
+    when: ansible_distribution == "RedHat"
+
+  - name: mv | /etc/sysconfig/rhn/systemid to /etc/sysconfig/rhn/systemid.orig
+    command: mv /etc/sysconfig/rhn/systemid /etc/sysconfig/rhn/systemid.orig creates=/etc/sysconfig/rhn/systemid.orig
+    when: ansible_distribution == "RedHat"
+
+  - name: subscription-manager | register --autosubscribe
+    command: /usr/bin/subscription-manager register --username={{ rhn_user }} --password={{ rhn_pass }} --auto-attach
+    when: ansible_distribution == "RedHat"
